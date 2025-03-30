@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Transaction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e6f7ff;
+            text-align: center;
+        }
+        .container {
+            width: 50%;
+            margin: 20px auto;
+            padding: 20px;
+            background: #08e1e5;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        h2 {
+            color: #333;
+        }
+        input, select {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background: red;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: not-allowed;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button.enabled {
+            background: #388e3c;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="formPage">
+        <h1>Bank Transaction</h1>
+        <form id="bankForm" action="/verify_details" method="POST">
+            <select id="bankName" name="bank_name" required>
+                <option value="">Select Bank</option>
+                <option>SBI</option>
+                <option>HDFC</option>
+                <option>ICICI</option>
+                <option>Axis Bank</option>
+                <option>Punjab National Bank</option>
+                <option>Bank of Baroda</option>
+                <option>Canara Bank</option>
+                <option>Union Bank of India</option>
+                <option>Indian Bank</option>
+                <option>Bank of India</option>
+            </select>
+            <input type="text" id="customerName" name="name" placeholder="Customer Name" required>
+            <input type="text" id="phoneNumber" name="phone" placeholder="Phone Number" required>
+            <input type="text" id="accountNumber" name="account_number" placeholder="Account Number" required>
+            <input type="text" id="renterAccountNumber" placeholder="Re-enter Account Number" required oninput="checkAccountMatch()">
+            <span id="accountError" class="error"></span>
+            <input type="text" id="ifscCode" name="ifsc_code" placeholder="IFSC Code" required>
+            <button id="submitBtn" disabled>Submit</button>
+        </form>
+    </div>
+
+    <script>
+        function checkAccountMatch() {
+            let accNumber = document.getElementById("accountNumber").value;
+            let renterAccNumber = document.getElementById("renterAccountNumber").value;
+            let errorField = document.getElementById("accountError");
+            let submitBtn = document.getElementById("submitBtn");
+            
+            if (accNumber !== renterAccNumber) {
+                errorField.textContent = "Account numbers do not match!";
+                submitBtn.disabled = true;
+                submitBtn.classList.remove("enabled");
+            } else {
+                errorField.textContent = "";
+                submitBtn.disabled = false;
+                submitBtn.classList.add("enabled");
+            }
+        }
+    </script>
+</body>
+</html>

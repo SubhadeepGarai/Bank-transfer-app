@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Security Check</title>
+    
+    <h1 style="color: rgb(47, 243, 8); position: relative; top: 30px;">Security Check</h1>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0a0a;
+            text-align: center;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            position: relative;
+            width: 300px;
+            margin: 100px auto;
+        }
+        .face-logo {
+            width: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            animation: glow 1.5s infinite alternate;
+        }
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
+            to { box-shadow: 0 0 30px rgba(0, 255, 255, 1); }
+        }
+        .scanner {
+            position: absolute;
+            top: 35%;
+            left: 10%;
+            width: 80%;
+            height: 4px;
+            background: rgb(45, 213, 239);
+            border-radius: 2px;
+            animation: scan 3s infinite;
+        }
+        @keyframes scan {
+            0% { top: 35%; }
+            50% { top: 65%; }
+            100% { top: 35%; }
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .loading {
+            font-size: 16px;
+            color: yellow;
+        }
+        .verified {
+            color: green;
+        }
+        .failed {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="scanner"></div>
+        <img src="face-logo.jpg" alt="Face Recognition" class="face-logo">
+        <p class="status loading" id="status">Scanning Face...</p>
+    </div>
+    
+    <script>
+        function verifyFace() {
+            fetch('/verify_face', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    let statusText = document.getElementById("status");
+                    if (data.success) {
+                        statusText.innerText = "Face Verified ✅";
+                        statusText.classList.remove("loading");
+                        statusText.classList.add("verified");
+                        setTimeout(() => {
+                            window.location.href = "/next_step"; // Redirect to the next page after verification
+                        }, 2000);
+                    } else {
+                        statusText.innerText = "Face Verification Failed ❌";
+                        statusText.classList.remove("loading");
+                        statusText.classList.add("failed");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error verifying face:", error);
+                    let statusText = document.getElementById("status");
+                    statusText.innerText = "Error Connecting to Server!";
+                    statusText.classList.remove("loading");
+                    statusText.classList.add("failed");
+                });
+        }
+
+        setTimeout(verifyFace, 4000); // Simulate scanning before calling backend
+    </script>
+</body>
+</html>

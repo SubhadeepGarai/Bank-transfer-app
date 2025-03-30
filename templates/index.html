@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Banking</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        input, button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #response, #balance {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        video {
+            width: 300px;
+            height: auto;
+            margin: 10px;
+            border: 2px solid black;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>Secure Banking Authentication</h2>
+
+    <!-- User Details Form -->
+    <div id="user-details">
+        <h3>Enter Your Details</h3>
+        <input type="text" id="bank_name" placeholder="Bank Name" required><br>
+        <input type="text" id="name" placeholder="Full Name" required><br>
+        <input type="text" id="phone" placeholder="Phone Number" required><br>
+        <input type="text" id="account_number" placeholder="Account Number" required><br>
+        <input type="text" id="ifsc_code" placeholder="IFSC Code" required><br>
+        <button onclick="verifyUser()">Verify Details</button>
+    </div>
+
+    <!-- PIN Verification -->
+    <div id="pin-verification" class="hidden">
+        <h3>Enter PIN</h3>
+        <input type="number" id="amount" placeholder="Amount to Withdraw" required><br>
+        <input type="password" id="pin" placeholder="Enter 4-Digit PIN" required><br>
+        <button onclick="verifyPin()">Verify PIN</button>
+    </div>
+
+    <!-- Face Recognition -->
+    <div id="face-verification" class="hidden">
+        <h3>Face Recognition</h3>
+        <video id="video" autoplay></video><br>
+        <button onclick="captureImage()">Capture Photo</button>
+        <canvas id="canvas" class="hidden"></canvas>
+    </div>
+
+    <!-- Transaction Status & Balance -->
+    <div id="transaction-status" class="hidden">
+        <h3>Transaction Complete ✅</h3>
+        <p id="balance"></p>
+    </div>
+
+    <div id="response"></div>
+
+    <script>
+        function verifyUser() {
+            let data = {
+                bank_name: $("#bank_name").val(),
+                name: $("#name").val(),
+                phone: $("#phone").val(),
+                account_number: $("#account_number").val(),
+                ifsc_code: $("#ifsc_code").val()
+            };
+
+            $.ajax({
+                url: "/verify_user",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(response) {
+                    $("#response").text(response.message).css("color", response.status === "success" ? "green" : "red");
+                    if (response.status === "success") {
+                        $("#user-details").hide();
+                        $("#pin-verification").show();
+                    }
+                }
+            });
+        }
+
+        function verifyPin() {
+            let data = {
+                pin: $("#pin").val(),
+                amount: $("#amount").val()
+            };
+
+            $.ajax({
+                url: "/verify_pin",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(response) {
+                    $("#response").text(response.message).css("color", response.status === "success" ? "green" : "red");
+                    if (response.status === "success") {
+                        $("#pin-verification").hide();
+                        $("#face-verification").show();
+                        startCamera();
+                    }
+                }
+            });
+        }
+
+        let videoStream = null;
+
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    videoStream = stream;
+                    document.getElementById("video").srcObject = stream;
+                })
+                .catch(function(err) {
+                    console.error("Error accessing camera: ", err);
+                });
+        }
+
+        function captureImage() {
+            let video = document.getElementById("video");
+            let canvas = document.getElementById("canvas");
+            let context = canvas.getContext("2d");
+
+            // Set canvas size to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Draw the current video frame onto the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas to base64 image data
+            let imageData = canvas.toDataURL("image/png");
+
+            // Stop the video stream after capturing
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+
+            // Send image for recognition
+            uploadFace(imageData);
+        }
+
+        function uploadFace(imageData) {
+            $.ajax({
+                url: "/recognize_faces",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ image: imageData }),
+                success: function(response) {
+                    $("#response").text(response.message).css("color", response.status === "success" ? "green" : "red");
+
+                    if (response.status === "success") {
+                        $("#face-verification").hide();
+                        $("#transaction-status").show();
+                        $("#balance").text("Updated Account Balance: ₹" + response.updated_balance);
+                        alert("Transaction Successful! Updated Balance: ₹" + response.updated_balance);
+                    } else {
+                        alert("Face verification failed. Transaction denied.");
+                    }
+                },
+                error: function(err) {
+                    console.error("Error in face verification:", err);
+                    $("#response").text("Face verification error.").css("color", "red");
+                }
+            });
+        }
+    </script>
+</body>
+</html>
